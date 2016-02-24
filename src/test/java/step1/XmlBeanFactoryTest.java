@@ -7,7 +7,7 @@ import java.io.InputStream;
 
 import static org.junit.Assert.*;
 
-public class BeanFactoryTest {
+public class XmlBeanFactoryTest {
 
     @Test
     public void registerBean() {
