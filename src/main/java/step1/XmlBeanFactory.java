@@ -28,7 +28,7 @@ public class XmlBeanFactory {
      */
     private Map beanHash = new HashMap();
     public <T> T getBean(String key, Class<T> claz) {
-        return (T) beanHash.get(key);
+        return (T) getBean(key);
     }
     public Object getBean(String key) {
         return beanHash.get(key);
@@ -92,9 +92,7 @@ public class XmlBeanFactory {
 
         try {
             Class claz = Class.forName(classCanonicalName);
-            Constructor<?>[] targetClass = claz.getDeclaredConstructors();
-            //targetClass[0].setAccessible(true);
-            beanHash.put(propertyName, claz.newInstance());
+            registerBean(propertyName, claz.newInstance());
         } catch (ClassNotFoundException e) {
             throw new IllegalArgumentException(String.format("Invalid Class Path %s", classCanonicalName));
         } catch (InstantiationException e) {
@@ -102,5 +100,9 @@ public class XmlBeanFactory {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
+    }
+
+    private void registerBean(String propertyName, Object claz) {
+        beanHash.put(propertyName, claz);
     }
 }
