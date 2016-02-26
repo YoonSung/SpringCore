@@ -26,4 +26,8 @@ public class PropertyValues {
     public PropertyValue[] getPropertyValues() {
         return (PropertyValue[]) propertyValueList.toArray(new PropertyValue[0]);
     }
+
+    public int getCount() {
+        return propertyValueList.size();
+    }
 }

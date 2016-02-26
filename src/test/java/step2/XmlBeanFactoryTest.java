@@ -26,12 +26,12 @@ public class XmlBeanFactoryTest {
         XmlBeanFactory beanFactory = new XmlBeanFactory(inputStream);
         B b = beanFactory.getBean("B", B.class);
         assertEquals(b.name, "Yoonsung");
-        assertEquals(b.age, 29);
+        assertEquals(b.age.intValue(), 29);
         b.name = "Java";
         b.age = 22;
 
         B reloadedB = beanFactory.getBean("B", B.class);
         assertEquals(reloadedB.name, "Java");
-        assertEquals(reloadedB.age, 22);
+        assertEquals(reloadedB.age.intValue(), 22);
     }
 }

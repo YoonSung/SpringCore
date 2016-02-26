@@ -14,6 +14,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,6 +27,7 @@ public class XmlBeanFactory {
     private static final String ID_ATTRIBUTE = "id";
     private static final String PROPERTY_ELEMENT = "property";
     private static final String NAME_ATTRIBUTE = "name";
+    private static final String VALUE_ATTRIBUTE = "value";
 
     /**
      * Map of Bean objects, keyed by id attribute
@@ -54,18 +58,48 @@ public class XmlBeanFactory {
     private Object createBean(String key) {
         try {
             BeanDefinition beanDefinition = getBeanDefinition(key);
-            return beanDefinition.getBeanClass().newInstance();
+            PropertyValues propertyValues = beanDefinition.getPropertyValues();
+            Object newlyCreatedBean = beanDefinition.getBeanClass().newInstance();
+            applyPropertyValues(beanDefinition, propertyValues, newlyCreatedBean, key);
+            return newlyCreatedBean;
         } catch (InstantiationException e) {
             e.printStackTrace();
             throw new IllegalArgumentException("Cannot instantiate [bean name : " + key+ "]; is it an interface or an abstract class?");
         } catch (IllegalAccessException e) {
             e.printStackTrace();
-            throw new IllegalArgumentException("Cannot instantiate [bean name : " + key + "]; has class definition changed? Is there a public constructor?", ex);
+            throw new IllegalArgumentException("Cannot instantiate [bean name : " + key + "]; has class definition changed? Is there a public constructor?");
         }
     }
 
-    private void applyPropertyValues(Object newlyCreatedBean, PropertyValues propertyValues, String beanName) {
+    private void applyPropertyValues(BeanDefinition beanDefinition, PropertyValues propertyValues, Object bean, String beanName) {
+        Class clazz = beanDefinition.getBeanClass();
 
+        PropertyValue[] array = propertyValues.getPropertyValues();
+        for (int i = 0 ; i < propertyValues.getCount() ; ++i) {
+            PropertyValue property = array[i];
+            try {
+                Field field = clazz.getDeclaredField(property.getName());
+                String propertyName = property.getName();
+
+                Method method = clazz.getMethod("set" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1), new Class[]{field.getType()});
+                if ("java.lang.Integer".equals(field.getType().getName())) {
+                    method.invoke(bean, Integer.parseInt(property.getValue().toString()));
+                } else {
+                    method.invoke(bean, property.getValue().toString());
+                }
+            } catch (NoSuchFieldException e) {
+                e.printStackTrace();
+                throw new IllegalArgumentException("Cannot instantiate [bean name : " + beanName + "]; is not have field [" + property.getName() + "]");
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+                throw new IllegalArgumentException("Cannot instantiate [bean name : " + beanName + "]; Cannot access field [" + property.getName() + "]");
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+                throw new IllegalArgumentException("Cannot instantiate [bean name : " + beanName + "]; Cannot access field, set method not defined [" + property.getName() + "]");
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private BeanDefinition getBeanDefinition(String key) {
@@ -145,8 +179,8 @@ public class XmlBeanFactory {
 
     private Object getValue(Element propElement) {
         //nested value, 예를들어 List, Map등의 판별을 통해 데이터를 만들어내야 하지만
-        //학습을 위한 구현이므로 기본적인 literal value에 대해서만 구현한다.
-        return propElement.getNodeValue();
+        //학습을 위한 구현이므로 하나의 데이터를 저장하게끔 구현한다
+        return propElement.getAttribute(VALUE_ATTRIBUTE);
     }
 
     private PropertyValues createPropertyValues(Element beanElement) {
