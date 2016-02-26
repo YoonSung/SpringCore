@@ -35,75 +35,12 @@ public class XmlBeanFactory {
     private Map<String, BeanDefinition> beanDefinitionHash = new HashMap();
     private Map beanHash = new HashMap();
 
-    public <T> T getBean(String key, Class<T> claz) {
+    public <T> T getBean(String key, Class<T> clazz) {
         return (T) getBean(key);
     }
+
     public Object getBean(String key) {
         return getBeanInternal(key);
-    }
-
-    private Object getBeanInternal(String key) {
-        if (key == null)
-            throw new IllegalArgumentException("Bean name null is not allowed");
-
-        if (beanHash.containsKey(key)) {
-            return beanHash.get(key);
-        }
-
-        Object newlyCreatedBean = createBean(key);
-        beanHash.put(key, newlyCreatedBean);
-        return newlyCreatedBean;
-    }
-
-    private Object createBean(String key) {
-        try {
-            BeanDefinition beanDefinition = getBeanDefinition(key);
-            PropertyValues propertyValues = beanDefinition.getPropertyValues();
-            Object newlyCreatedBean = beanDefinition.getBeanClass().newInstance();
-            applyPropertyValues(beanDefinition, propertyValues, newlyCreatedBean, key);
-            return newlyCreatedBean;
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-            throw new IllegalArgumentException("Cannot instantiate [bean name : " + key+ "]; is it an interface or an abstract class?");
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-            throw new IllegalArgumentException("Cannot instantiate [bean name : " + key + "]; has class definition changed? Is there a public constructor?");
-        }
-    }
-
-    private void applyPropertyValues(BeanDefinition beanDefinition, PropertyValues propertyValues, Object bean, String beanName) {
-        Class clazz = beanDefinition.getBeanClass();
-
-        PropertyValue[] array = propertyValues.getPropertyValues();
-        for (int i = 0 ; i < propertyValues.getCount() ; ++i) {
-            PropertyValue property = array[i];
-            try {
-                Field field = clazz.getDeclaredField(property.getName());
-                String propertyName = property.getName();
-
-                Method method = clazz.getMethod("set" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1), new Class[]{field.getType()});
-                if ("java.lang.Integer".equals(field.getType().getName())) {
-                    method.invoke(bean, Integer.parseInt(property.getValue().toString()));
-                } else {
-                    method.invoke(bean, property.getValue().toString());
-                }
-            } catch (NoSuchFieldException e) {
-                e.printStackTrace();
-                throw new IllegalArgumentException("Cannot instantiate [bean name : " + beanName + "]; is not have field [" + property.getName() + "]");
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-                throw new IllegalArgumentException("Cannot instantiate [bean name : " + beanName + "]; Cannot access field [" + property.getName() + "]");
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-                throw new IllegalArgumentException("Cannot instantiate [bean name : " + beanName + "]; Cannot access field, set method not defined [" + property.getName() + "]");
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private BeanDefinition getBeanDefinition(String key) {
-        return beanDefinitionHash.get(key);
     }
 
     public XmlBeanFactory(String fileName) {
@@ -160,7 +97,6 @@ public class XmlBeanFactory {
         String id = element.getAttribute(ID_ATTRIBUTE);
         if (id == null || "".equals(id))
             throw new IllegalArgumentException("Bean without id attribute");
-        String classCanonicalName = element.getAttribute(CLASS_ATTRIBUTE);
 
         PropertyValues propertyValues = createPropertyValues(element);
         BeanDefinition beanDefinition = createBeanDefinition(element, id, propertyValues);
@@ -171,10 +107,7 @@ public class XmlBeanFactory {
         String propertyName = propElement.getAttribute(NAME_ATTRIBUTE);
         if (propertyName == null || "".equals(propertyName))
             throw new IllegalArgumentException("Property without a name");
-
-        Object propertyValue = getValue(propElement);
-
-        return new PropertyValue(propertyName, propertyValue);
+        return new PropertyValue(propertyName, getValue(propElement));
     }
 
     private Object getValue(Element propElement) {
@@ -209,5 +142,71 @@ public class XmlBeanFactory {
 
     private void registerBeanDefinition(String id, BeanDefinition beanDefinition) {
         beanDefinitionHash.put(id, beanDefinition);
+    }
+
+    private BeanDefinition getBeanDefinition(String key) {
+        return beanDefinitionHash.get(key);
+    }
+
+    private Object getBeanInternal(String key) {
+        if (key == null)
+            throw new IllegalArgumentException("Bean name null is not allowed");
+
+        if (beanHash.containsKey(key)) {
+            return beanHash.get(key);
+        }
+
+        Object newlyCreatedBean = createBean(key);
+        beanHash.put(key, newlyCreatedBean);
+        return newlyCreatedBean;
+    }
+
+    private Object createBean(String key) {
+        try {
+            BeanDefinition beanDefinition = getBeanDefinition(key);
+            PropertyValues propertyValues = beanDefinition.getPropertyValues();
+            Object newlyCreatedBean = beanDefinition.getBeanClass().newInstance();
+            applyPropertyValues(beanDefinition, propertyValues, newlyCreatedBean, key);
+            return newlyCreatedBean;
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+            throw new IllegalArgumentException("Cannot instantiate [bean name : " + key+ "]; is it an interface or an abstract class?");
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            throw new IllegalArgumentException("Cannot instantiate [bean name : " + key + "]; has class definition changed? Is there a public constructor?");
+        }
+    }
+
+    private void applyPropertyValues(BeanDefinition beanDefinition, PropertyValues propertyValues, Object bean, String beanName) {
+        Class clazz = beanDefinition.getBeanClass();
+
+        PropertyValue[] array = propertyValues.getPropertyValues();
+        for (int i = 0 ; i < propertyValues.getCount() ; ++i) {
+            PropertyValue property = array[i];
+            try {
+                Field field = clazz.getDeclaredField(property.getName());
+                String propertyName = property.getName();
+
+                Method method = clazz.getMethod("set" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1), new Class[]{field.getType()});
+
+                //Integer와 String 필드에 대해서만 동작
+                if ("java.lang.Integer".equals(field.getType().getName())) {
+                    method.invoke(bean, Integer.parseInt(property.getValue().toString()));
+                } else {
+                    method.invoke(bean, property.getValue().toString());
+                }
+            } catch (NoSuchFieldException e) {
+                e.printStackTrace();
+                throw new IllegalArgumentException("Cannot instantiate [bean name : " + beanName + "]; is not have field [" + property.getName() + "]");
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+                throw new IllegalArgumentException("Cannot instantiate [bean name : " + beanName + "]; Cannot access field [" + property.getName() + "]");
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+                throw new IllegalArgumentException("Cannot instantiate [bean name : " + beanName + "]; Cannot access field, set method not defined [" + property.getName() + "]");
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
