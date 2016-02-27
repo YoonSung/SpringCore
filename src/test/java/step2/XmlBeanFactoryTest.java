@@ -18,7 +18,7 @@ public class XmlBeanFactoryTest {
      * XML은 사용자가 이용하는 하나의 인터페이스 뿐이지, 컨테이너가 관리하는 설정대상이라고 할 수 없다
      * 그러므로 우리는 Spring Container의 기능을 수행하기 위해서 BeanDefinition과 동일한 기능을 수행하는 클래스를 정의해서 활용한다
      *
-     * 이번 단계에서는 간단하게 xml에 등록하는 object의 필드 데이터, property와 bean id, class 데이터를 관리할 수 있도록 한다.
+     * 이번 단계에서는 간단하게 xml에 등록하는 object의 필드 데이터, property와 bean id, class 속성 데이터를 관리할 수 있도록 한다.
      */
     @Test
     public void registerBeanWithProperty() {
