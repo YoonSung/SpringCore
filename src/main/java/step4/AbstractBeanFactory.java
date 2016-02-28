@@ -1,4 +1,4 @@
-package step3;
+package step4;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -7,11 +7,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class AbstractBeanFactory implements BeanFactory {
+
+    private final BeanFactory parentBeanFactory;
     /**
      * Map of Bean objects, keyed by id attribute
      */
     private Map<String, BeanDefinition> beanDefinitionHash = new HashMap();
     private Map beanHash = new HashMap();
+
+    public AbstractBeanFactory(BeanFactory parentBeanFactory) {
+        this.parentBeanFactory = parentBeanFactory;
+    }
 
     @Override
     public <T> T getBean(String key, Class<T> clazz) {
@@ -29,11 +35,18 @@ public class AbstractBeanFactory implements BeanFactory {
 
         if (beanHash.containsKey(key)) {
             return beanHash.get(key);
+        } else {
+            BeanDefinition beanDefinition = getBeanDefinition(key);
+            if (beanDefinition != null) {
+                Object newlyCreatedBean = createBean(key);
+                beanHash.put(key, newlyCreatedBean);
+                return newlyCreatedBean;
+            } else {
+                if (this.parentBeanFactory == null)
+                    throw new IllegalArgumentException("Cannot instantiate [bean name : " + key + "]; is not exist");
+                return parentBeanFactory.getBean(key);
+            }
         }
-
-        Object newlyCreatedBean = createBean(key);
-        beanHash.put(key, newlyCreatedBean);
-        return newlyCreatedBean;
     }
 
     public void registerBeanDefinition(String id, BeanDefinition beanDefinition) {
@@ -50,10 +63,11 @@ public class AbstractBeanFactory implements BeanFactory {
             PropertyValues propertyValues = beanDefinition.getPropertyValues();
             Object newlyCreatedBean = beanDefinition.getBeanClass().newInstance();
             applyPropertyValues(beanDefinition, propertyValues, newlyCreatedBean, key);
+            callLifecycleMethodsIfNecessary(newlyCreatedBean);
             return newlyCreatedBean;
         } catch (InstantiationException e) {
             e.printStackTrace();
-            throw new IllegalArgumentException("Cannot instantiate [bean name : " + key+ "]; is it an interface or an abstract class?");
+            throw new IllegalArgumentException("Cannot instantiate [bean name : " + key + "]; is it an interface or an abstract class?");
         } catch (IllegalAccessException e) {
             e.printStackTrace();
             throw new IllegalArgumentException("Cannot instantiate [bean name : " + key + "]; has class definition changed? Is there a public constructor?");
@@ -64,7 +78,7 @@ public class AbstractBeanFactory implements BeanFactory {
         Class clazz = beanDefinition.getBeanClass();
 
         PropertyValue[] array = propertyValues.getPropertyValues();
-        for (int i = 0 ; i < propertyValues.getCount() ; ++i) {
+        for (int i = 0; i < propertyValues.getCount(); ++i) {
             PropertyValue property = array[i];
             try {
                 Field field = clazz.getDeclaredField(property.getName());
@@ -90,6 +104,12 @@ public class AbstractBeanFactory implements BeanFactory {
             } catch (InvocationTargetException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    private void callLifecycleMethodsIfNecessary(Object bean) {
+        if (bean instanceof InitializingBean) {
+            ((InitializingBean) bean).afterPropertiesSet();
         }
     }
 }

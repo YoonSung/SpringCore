@@ -85,14 +85,14 @@ public class XmlBeanFactory {
     }
 
     private void loadBean(Element element) {
-        String propertyName = element.getAttribute(ID_ATTRIBUTE);
-        if (propertyName == null || "".equals(propertyName))
+        String id = element.getAttribute(ID_ATTRIBUTE);
+        if (id == null || "".equals(id))
             throw new IllegalArgumentException("Bean without id attribute");
         String classCanonicalName = element.getAttribute(CLASS_ATTRIBUTE);
 
         try {
             Class claz = Class.forName(classCanonicalName);
-            registerBean(propertyName, claz.newInstance());
+            registerBean(id, claz.newInstance());
         } catch (ClassNotFoundException e) {
             throw new IllegalArgumentException(String.format("Invalid Class Path %s", classCanonicalName));
         } catch (InstantiationException e) {

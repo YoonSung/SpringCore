@@ -2,13 +2,11 @@ package step3;
 
 import bean.B;
 import org.junit.Test;
-import step2.XmlBeanFactory;
-
 import java.io.InputStream;
 
 import static org.junit.Assert.*;
 
-public class XmlBeanFactoryTest {
+public class Step3Test {
     /**
      * step2까지 진행해서 우리는 간단하게나마 XML 설정파일을 이용한 빈생성, 저장, 사용을 할 수 있었다.
      * 우리가 기대하는 기능에는 (Bean끼리의 Dependency 설정, 상속, alias 지정, scope 설정, 지연생성 등)
@@ -22,7 +20,7 @@ public class XmlBeanFactoryTest {
      * Step1 -> Step2로 추가된 내용은 간단하지만 벌써 코드라인수는 100 -> 200라인으로 늘었고
      * 객체지향 개발의 5대 원칙 중 많은 내용을 위반하고 있다.
      *
-     * 물론 이 원칙이 항상 옳은것은 아니지만 Week2에서 이야기했던것처럼
+     * 물론 이 원칙이 항상 옳은것은 아니지만 2주차 스터디 시간에 이야기했던것처럼
      * XmlBeanFactory가 너무 많은 기능을 수행하고 있어서 유연하지 못하고
      * 너무 많은 책임을 가지고 있다.
      *
@@ -62,7 +60,7 @@ public class XmlBeanFactoryTest {
     @Test
     public void registerBeanWithProperty() {
         InputStream inputStream = ClassLoader.getSystemResourceAsStream("step2.xml");
-        step2.XmlBeanFactory beanFactory = new XmlBeanFactory(inputStream);
+        XmlBeanFactory beanFactory = new XmlBeanFactory(inputStream);
         B b = beanFactory.getBean("B", B.class);
         assertEquals(b.name, "Yoonsung");
         assertEquals(b.age.intValue(), 29);
