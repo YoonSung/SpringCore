@@ -14,7 +14,7 @@ public class Step4Test {
      * AbstractBeanFactory를 상속받는 클래스를 정의한뒤, Annotation을 파싱하여 BeanDefinition객체를 만드는 로직을 수행하도록 하면 된다.
      *
      * 아직 추상화가 충분하지 않다고 느낄 수 있으나, 당장 AnnotationBeanFactory와 같은 클래스를 추가하지 않을 것이므로
-     * 이 정도까지하고 넘어가자
+     * 이 정도에서 1차적으로 마무리한다.
      *
      * 이번 Step4에서는 두가지 기능을 추가할 것이다.
      *
