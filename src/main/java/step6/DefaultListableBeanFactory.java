@@ -1,8 +1,11 @@
-package step5;
+package step6;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
-public class DefaultListableBeanFactory extends AbstractBeanFactory implements ListableBeanFactory {
+public class DefaultListableBeanFactory extends AbstractBeanFactory implements BeanDefinitionRegistry, ListableBeanFactory {
 
     private Map<String, BeanDefinition> beanDefinitionHash = new HashMap();
 
@@ -34,10 +37,12 @@ public class DefaultListableBeanFactory extends AbstractBeanFactory implements L
         super(parentBeanFactory);
     }
 
+    @Override
     public void registerBeanDefinition(String id, BeanDefinition beanDefinition) {
         beanDefinitionHash.put(id, beanDefinition);
     }
 
+    @Override
     public BeanDefinition getBeanDefinition(String key) {
         return beanDefinitionHash.get(key);
     }
